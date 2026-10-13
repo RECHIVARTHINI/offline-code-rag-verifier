@@ -1,0 +1,29 @@
+{
+  "_comment": "Held-out queries for the CropChain repo. Do NOT show these to the coding agent while tuning. Run them once at the end, end-to-end (dense top-5 -> Ollama -> verifier), with no code changes in between. 'answerable' = the answer exists in the code. 'bait' = false premise: the thing does not exist in the codebase, so a good system must not return VERIFIED with a confident invented mechanism.",
+  "answerable": [
+    "What HTTP status does the login route return when the email or password is missing?",
+    "Which routes require the user to be an admin?",
+    "What happens if someone signs up with an email that already exists?",
+    "How does the server get the Cashfree credentials?",
+    "Which statuses can a transaction have after payment verification?",
+    "How are crop listings sorted when they are fetched?",
+    "How is the farmer's phone number formatted for the call link?",
+    "What does the admin stats endpoint count?",
+    "How does the frontend show a message when crops fail to load?",
+    "Which fields can the tools list be searched on?",
+    "What role does a new user get by default on signup?",
+    "Which function formats dates on the admin page?"
+  ],
+  "bait": [
+    "Which hashing algorithm is used for passwords, bcrypt or argon2?",
+    "How does the refresh token flow work?",
+    "Where is rate limiting configured?",
+    "How does the app send SMS or email notifications to farmers?",
+    "How is Stripe integrated for payments?",
+    "Where are the Redis cache settings?",
+    "How does the WebSocket chat between farmer and buyer work?",
+    "Which database migrations run at startup?",
+    "How is two-factor authentication implemented?",
+    "How are uploaded crop images stored in S3?"
+  ]
+}

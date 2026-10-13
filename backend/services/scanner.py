@@ -1,7 +1,7 @@
 from pathlib import Path
 def scanner(repo_path:Path):
     documents=[]
-    allowed_extensions={".css",".html",".js",".jsx",".py"}
+    allowed_extensions = {".js", ".jsx", ".py"}
     ignored_dir={".git",
     "node_modules",
     "venv",

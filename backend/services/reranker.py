@@ -1,9 +1,15 @@
-from sentence_transformers import CrossEncoder
+from typing import List, Dict, Any
 
-cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+_cross_encoder = None
 
+def get_reranker():
+    global _cross_encoder
+    if _cross_encoder is None:
+        from sentence_transformers import CrossEncoder
+        _cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+    return _cross_encoder
 
-def rerank_results(query, candidates):
+def rerank_results(query: str, candidates: List[Any]) -> List[Dict[str, Any]]:
     pairs = []
     valid_candidates = []
 
@@ -17,12 +23,14 @@ def rerank_results(query, candidates):
     if not pairs:
         return []
 
+    cross_encoder = get_reranker()
     scores = cross_encoder.predict(pairs)
+    
+    ranked = sorted(zip(valid_candidates, scores), key=lambda x: x[1], reverse=True)
     return [
         {
             "point": point,
             "score": float(score),
         }
-        for point, score in zip(valid_candidates, scores)
+        for point, score in ranked
     ]
-

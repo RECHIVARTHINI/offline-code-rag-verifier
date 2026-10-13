@@ -1,0 +1,38 @@
+{
+  "_comment": "Hand-labelled by reading the 53 indexed CropChain chunks. 'relevant' = FQNs of chunks that contain the answer. Review/adjust before quoting numbers: labels are one reader's judgement.",
+  "answerable": [
+    {"q": "Where is the login endpoint implemented?", "relevant": ["routes/authRoutes.js::POST /login", "routes/userRoutes.js::POST /login"]},
+    {"q": "How does user signup work?", "relevant": ["routes/authRoutes.js::POST /signup", "routes/userRoutes.js::POST /signup"]},
+    {"q": "How is admin access enforced on admin routes?", "relevant": ["routes/adminRoutes.js::requireAdmin"]},
+    {"q": "Which route returns dashboard statistics for the admin?", "relevant": ["routes/adminRoutes.js::GET /stats"]},
+    {"q": "How is a payment order created with Cashfree?", "relevant": ["routes/paymentRoutes.js::POST /create-order", "routes/paymentRoutes.js::cashfreeRequest"]},
+    {"q": "How is a payment verified after checkout?", "relevant": ["routes/paymentRoutes.js::POST /verify-payment", "routes/paymentRoutes.js::cashfreeRequest"]},
+    {"q": "Which function sends HTTP requests to the Cashfree API?", "relevant": ["routes/paymentRoutes.js::cashfreeRequest"]},
+    {"q": "How can a farmer see their total earnings?", "relevant": ["routes/paymentRoutes.js::GET /farmer/:identifier"]},
+    {"q": "How does a buyer get their payment history?", "relevant": ["routes/paymentRoutes.js::GET /buyer/:email"]},
+    {"q": "How is a farmer account approved?", "relevant": ["routes/adminRoutes.js::PATCH /users/:id/approve", "routes/userRoutes.js::PATCH /approve/:id"]},
+    {"q": "How is a farmer account rejected?", "relevant": ["routes/adminRoutes.js::PATCH /users/:id/reject"]},
+    {"q": "How are users deleted?", "relevant": ["routes/adminRoutes.js::DELETE /users/:id", "routes/userRoutes.js::DELETE /:id"]},
+    {"q": "How can tools be searched or filtered by category?", "relevant": ["routes/toolRoutes.js::GET /"]},
+    {"q": "How is a new tool listing created?", "relevant": ["routes/toolRoutes.js::POST /"]},
+    {"q": "How is a new crop listing created?", "relevant": ["routes/cropRoutes.js::POST /", "server.js::POST /api/list-crop"]},
+    {"q": "How does the browser load and render crops on the marketplace page?", "relevant": ["public/script.js::loadCrops", "public/script.js::createCropCard"]},
+    {"q": "How is user input escaped in the frontend to avoid XSS?", "relevant": ["public/script.js::esc", "public/test-admin.js::esc"]},
+    {"q": "Which API prefixes are mounted in server.js?", "relevant": ["server.js::USE /api/tools", "server.js::USE /api/payments", "server.js::USE /api/users", "server.js::USE /api/auth", "server.js::USE /api/crops", "server.js::USE /api/prices", "server.js::USE /api/analytics", "server.js::USE /api/complaints", "server.js::USE /api/admin"]},
+    {"q": "How is the call and WhatsApp contact link for a farmer built?", "relevant": ["public/script.js::createCropCard"]},
+    {"q": "How does the admin delete a crop listing?", "relevant": ["routes/adminRoutes.js::DELETE /crops/:id"]},
+    {"q": "Which endpoint returns analytics for a crop?", "relevant": ["routes/analyticsRoutes.js::GET /:crop"]},
+    {"q": "How are market prices added?", "relevant": ["routes/priceRoutes.js::POST /add"]},
+    {"q": "How is a tool listing deleted?", "relevant": ["routes/toolRoutes.js::DELETE /:id", "routes/adminRoutes.js::DELETE /tools/:id"]},
+    {"q": "How does the admin page render a farmer row with approve and reject buttons?", "relevant": ["public/test-admin.js::farmerRow"]}
+  ],
+  "unanswerable": [
+    {"q": "What fields does the User schema have?", "why": "Mongoose models are not indexed (chunker only keeps function declarations, classes, methods and routes)"},
+    {"q": "How is the MongoDB connection configured?", "why": "top-level server/config code is not chunked"},
+    {"q": "How are passwords hashed before they are stored?", "why": "false premise: passwords are stored in plain text (see authRoutes POST /signup)"},
+    {"q": "How is JWT authentication implemented?", "why": "false premise: no JWT anywhere; admin check trusts an x-user-id header"},
+    {"q": "What does analyticsController.getStats compute?", "why": "controller body is not indexed (arrow/exports assignment not chunked)"},
+    {"q": "How does priceController.addPrice store a price?", "why": "controller body is not indexed"},
+    {"q": "How is the crop card styled in CSS?", "why": ".css/.html are scanned but the chunker returns nothing for them"}
+  ]
+}

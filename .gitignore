@@ -24,7 +24,34 @@ env/
 # Local runtime data
 storage/qdrant/
 *.log
+company_codebase/
 
 # OS files
 .DS_Store
 Thumbs.db
+
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Generated document chunks
+chunks_dump.json
+
+# Local models and vector stores
+chroma_db/
+vector_db/
+models/
+ollama_models/
+*.gguf
+*.safetensors
+*.pth
+*.pt
+
+# Generated evaluation data
+eval/chunks_dump_v2.json
+eval_orig/chunks_dump_slim.json
+eval/results/
+eval/heldout_labeling.csv
+eval/prose_labeling.csv

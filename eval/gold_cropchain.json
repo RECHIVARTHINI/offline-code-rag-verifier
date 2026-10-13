@@ -1,0 +1,62 @@
+[
+  {
+    "id": "ans_1",
+    "query": "In adminRoutes.js, list the exact route handlers and the functions each handler directly calls.",
+    "is_answerable": true,
+    "expected_decision": "VERIFIED"
+  },
+  {
+    "id": "ans_2",
+    "query": "Where is the crop price route defined and what controller does it use?",
+    "is_answerable": true,
+    "expected_decision": "VERIFIED"
+  },
+  {
+    "id": "ans_3",
+    "query": "How are tools deleted in adminRoutes.js?",
+    "is_answerable": true,
+    "expected_decision": "VERIFIED"
+  },
+  {
+    "id": "unans_1",
+    "query": "How is quantum key distribution implemented for crop transactions?",
+    "is_answerable": false,
+    "expected_decision": "REJECTED_NO_EVIDENCE"
+  },
+  {
+    "id": "unans_2",
+    "query": "Explain the bitcoin blockchain proof-of-work mining algorithm used in this codebase.",
+    "is_answerable": false,
+    "expected_decision": "REJECTED_NO_EVIDENCE"
+  },
+  {
+    "id": "unans_3",
+    "query": "Where is the satellite imagery telemetry and weather radar ingestion pipeline configured?",
+    "is_answerable": false,
+    "expected_decision": "REJECTED_NO_EVIDENCE"
+  },
+  {
+    "id": "unans_4",
+    "query": "How does the deep reinforcement learning model predict future crop yield from drone lidar data?",
+    "is_answerable": false,
+    "expected_decision": "REJECTED_NO_EVIDENCE"
+  },
+  {
+    "id": "unans_5",
+    "query": "Show the Kubernetes Helm chart deployment template for Apache Kafka cluster brokers.",
+    "is_answerable": false,
+    "expected_decision": "REJECTED_NO_EVIDENCE"
+  },
+  {
+    "id": "unans_6",
+    "query": "How is facial recognition biometrics verified for farmer identity authentication?",
+    "is_answerable": false,
+    "expected_decision": "REJECTED_NO_EVIDENCE"
+  },
+  {
+    "id": "unans_7",
+    "query": "Where is the gRPC protobuf service mesh inter-service communication implemented?",
+    "is_answerable": false,
+    "expected_decision": "REJECTED_NO_EVIDENCE"
+  }
+]
