@@ -123,3 +123,55 @@ def clone_repo(repo_url: str) -> Path:
         raise RuntimeError(
             f"Git clone failed for repository '{repo_url_clean}': {str(e)}"
         ) from e
+
+
+def clone_persistent_repo(repo_url: str, target_dir: Path) -> Path:
+    """
+    Clones or updates a repository into a persistent directory on disk
+    to support incremental code updates without complete re-cloning.
+    """
+    repo_url_clean = repo_url.strip()
+    local_path = Path(repo_url_clean)
+
+    # 1. Local path validation
+    if local_path.exists() and local_path.is_dir():
+        if not is_path_allowlisted(local_path):
+            raise PermissionError(
+                f"Local repository path '{repo_url_clean}' is not in the allowlisted directories."
+            )
+        return local_path
+
+    # Check local-only mode
+    if is_local_only_mode():
+        raise PermissionError(
+            "Remote repository cloning is disabled in local-only mode (RAG_LOCAL_ONLY_MODE=1)."
+        )
+
+    # 2. Remote Git Host Allowlist Validation
+    host = extract_git_host(repo_url_clean)
+    if not is_git_host_allowed(repo_url_clean):
+        allowed_hosts_display = os.getenv("RAG_ALLOWED_GIT_HOSTS", "github.com, gitlab.com, bitbucket.org")
+        raise PermissionError(
+            f"Remote Git host '{host or 'unknown'}' is not in the approved Git host allowlist: [{allowed_hosts_display}]."
+        )
+
+    # 3. If target_dir exists and is already a git repo, update it
+    if target_dir.exists() and (target_dir / ".git").exists():
+        try:
+            repo = Repo(target_dir)
+            if repo.remotes:
+                repo.remotes.origin.fetch()
+                repo.remotes.origin.pull(repo.active_branch.name)
+            return target_dir
+        except Exception:
+            shutil.rmtree(target_dir, ignore_errors=True)
+
+    target_dir.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        Repo.clone_from(repo_url_clean, str(target_dir))
+        return target_dir
+    except Exception as e:
+        shutil.rmtree(target_dir, ignore_errors=True)
+        raise RuntimeError(
+            f"Git clone failed for repository '{repo_url_clean}' to '{target_dir}': {str(e)}"
+        ) from e

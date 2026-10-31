@@ -4,10 +4,12 @@ and stale vector purge on re-indexing.
 """
 import os
 import hashlib
+from typing import List, Dict, Any
 from qdrant_client import QdrantClient
 from qdrant_client.models import VectorParams, Distance, PointStruct
 
-QDRANT_STORAGE_PATH = os.path.join(os.getcwd(), "storage", "qdrant")
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+QDRANT_STORAGE_PATH = os.path.join(PROJECT_ROOT, "storage", "qdrant")
 os.makedirs(QDRANT_STORAGE_PATH, exist_ok=True)
 
 _client = None
@@ -75,3 +77,24 @@ def search_isolated_query(collection_name: str, embedding, limit: int = 20):
         with_payload=True
     )
     return result.points
+
+def get_collection_chunks(collection_name: str) -> List[Dict[str, Any]]:
+    """Scrolls and returns all chunk payloads stored in a Qdrant collection."""
+    client = get_qdrant_client()
+    collections = [c.name for c in client.get_collections().collections]
+    if collection_name not in collections:
+        return []
+    
+    points = []
+    next_offset = None
+    while True:
+        res, next_offset = client.scroll(
+            collection_name=collection_name,
+            limit=250,
+            offset=next_offset,
+            with_payload=True
+        )
+        points.extend(res)
+        if next_offset is None:
+            break
+    return [p.payload for p in points if p.payload]

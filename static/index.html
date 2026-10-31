@@ -1,0 +1,1702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zero-Trust Codebase RAG | Manager & Developer Studio</title>
+  <!-- Tailwind CSS & FontAwesome CDNs with offline fallbacks -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#1e1b4b'
+            },
+            surface: {
+              900: '#0b0f19',
+              850: '#0f172a',
+              800: '#1e293b',
+              700: '#334155'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbars & sleek styling */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0b0f19; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    .prose code { background: #1e293b; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-size: 0.875rem; color: #38bdf8; }
+    .prose pre code { background: transparent; padding: 0; color: inherit; }
+    .prose pre { background: #0f172a; border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem; overflow-x: auto; }
+    .animate-spin-slow { animation: spin 2.5s linear infinite; }
+    @keyframes pulse-subtle { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+    .pulse-subtle { animation: pulse-subtle 2s infinite; }
+  </style>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-indigo-600 selection:text-white">
+
+  <!-- ================= TOP NAVIGATION BAR ================= -->
+  <header class="bg-[#0f172a] border-b border-slate-800 sticky top-0 z-50 px-4 lg:px-6 py-2.5 flex items-center justify-between shadow-lg">
+    <div class="flex items-center space-x-4">
+      <div class="flex items-center space-x-2.5 cursor-pointer" onclick="switchTab('chat')">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 flex items-center justify-center shadow-md shadow-indigo-600/30 text-white font-bold">
+          <i class="fa-solid fa-shield-halved text-lg"></i>
+        </div>
+        <div>
+          <span class="font-bold text-base tracking-tight text-white flex items-center gap-2">
+            Zero-Trust Codebase RAG
+            <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">v2.1</span>
+          </span>
+          <span class="block text-[11px] text-slate-400 font-mono">Offline Static Verification Engine</span>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="hidden sm:flex items-center space-x-1 ml-4 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
+        <button id="nav-btn-chat" onclick="switchTab('chat')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-2 bg-indigo-600 text-white shadow">
+          <i class="fa-solid fa-comments"></i>
+          <span>Developer Chat</span>
+        </button>
+        <button id="nav-btn-manager" onclick="switchTab('manager')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+          <i class="fa-solid fa-diagram-project"></i>
+          <span>Manager Dashboard</span>
+          <span id="nav-project-badge" class="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-indigo-300 font-mono border border-slate-700">0</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Right Controls: Active Project Pill, User Auth, Status -->
+    <div class="flex items-center space-x-3">
+      <!-- Active Project Quick Pill -->
+      <div id="top-project-indicator" class="hidden md:flex items-center gap-2 px-3 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="text-slate-400">Active:</span>
+        <span id="top-project-name" class="font-semibold text-indigo-300 truncate max-w-[160px]">None</span>
+      </div>
+
+      <!-- User Auth Header Profile / Sign In Pill -->
+      <div id="user-auth-header" class="flex items-center gap-2">
+        <button onclick="openAuthModal()" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-sm">
+          <i class="fa-solid fa-user-lock"></i>
+          <span>Sign In / Register</span>
+        </button>
+      </div>
+
+      <!-- System Health Badge -->
+      <div class="flex items-center gap-1.5 text-xs text-slate-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg text-emerald-400">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+        <span class="hidden sm:inline font-mono text-[11px]">Qdrant Isolated</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTAINER ================= -->
+  <main class="flex-1 flex overflow-hidden relative">
+
+    <!-- ================= PAGE 1: MANAGER DASHBOARD ================= -->
+    <section id="page-manager" class="hidden flex-1 overflow-y-auto p-4 lg:p-8 space-y-6">
+      
+      <!-- Manager Top Banner / Header -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+        <div>
+          <h1 class="text-xl lg:text-2xl font-bold text-white flex items-center gap-2.5">
+            <i class="fa-solid fa-cubes text-indigo-400"></i>
+            Repository Management & Incremental Sync
+          </h1>
+          <p class="text-xs lg:text-sm text-slate-400 mt-1">
+            Upload private repositories, inspect AST chunks, and trigger incremental Git updates without a CI/CD pipeline.
+          </p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="refreshProjects()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium flex items-center gap-2 transition">
+            <i class="fa-solid fa-arrows-rotate" id="refresh-icon"></i>
+            <span>Refresh</span>
+          </button>
+          <button id="btn-add-repo-main" onclick="openIngestModal()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 text-xs font-semibold flex items-center gap-2 transition">
+            <i class="fa-solid fa-plus"></i>
+            <span>Add Repository</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Developer Read-Only Notice Banner -->
+      <div id="developer-role-banner" class="hidden p-3.5 rounded-2xl bg-amber-950/40 border border-amber-500/30 text-xs text-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+        <div class="flex items-center gap-2.5">
+          <div class="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
+            <i class="fa-solid fa-lock text-xs"></i>
+          </div>
+          <div>
+            <span class="font-bold text-amber-300">Developer Role (Read-Only Workspace):</span>
+            <span class="text-slate-300 ml-1">You can inspect files and query code. Ingesting new repositories, deleting, and syncing are reserved for <strong>Managers</strong>.</span>
+          </div>
+        </div>
+        <button onclick="switchAuthTab('login'); openAuthModal();" class="shrink-0 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 font-medium transition text-xs flex items-center gap-1.5 self-start sm:self-auto">
+          <i class="fa-solid fa-user-tie text-[10px]"></i>
+          <span>Switch to Manager</span>
+        </button>
+      </div>
+
+      <!-- Manager Admin Console Banner -->
+      <div id="manager-role-banner" class="hidden p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 text-xs text-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+        <div class="flex items-center gap-2.5">
+          <div class="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+            <i class="fa-solid fa-crown text-xs"></i>
+          </div>
+          <div>
+            <span class="font-bold text-emerald-300">Manager Admin Console (Full Access):</span>
+            <span class="text-slate-300 ml-1">You have administrative privileges to add private repositories, trigger incremental Git diff syncs, and delete projects.</span>
+          </div>
+        </div>
+        <span class="shrink-0 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono text-[10px] uppercase font-bold self-start sm:self-auto">
+          Admin Active
+        </span>
+      </div>
+
+      <!-- Quick Metrics Overview -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>Total Projects</span>
+            <i class="fa-solid fa-folder-tree text-indigo-400"></i>
+          </div>
+          <div id="stat-total-projects" class="text-2xl font-bold text-white mt-2 font-mono">0</div>
+          <div class="text-[11px] text-slate-500 mt-1">Multi-tenant isolated</div>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>Total AST Chunks</span>
+            <i class="fa-solid fa-code text-emerald-400"></i>
+          </div>
+          <div id="stat-total-chunks" class="text-2xl font-bold text-white mt-2 font-mono">0</div>
+          <div class="text-[11px] text-slate-500 mt-1">Functions, routes, models</div>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>Qualified Symbols</span>
+            <i class="fa-solid fa-network-wired text-purple-400"></i>
+          </div>
+          <div id="stat-total-symbols" class="text-2xl font-bold text-white mt-2 font-mono">0</div>
+          <div class="text-[11px] text-slate-500 mt-1">Deterministic FQNs indexed</div>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>Verification Gating</span>
+            <i class="fa-solid fa-shield-check text-blue-400"></i>
+          </div>
+          <div class="text-xl font-bold text-emerald-400 mt-2 font-mono">4-Layer AST</div>
+          <div class="text-[11px] text-slate-500 mt-1">Fail-closed zero-trust</div>
+        </div>
+      </div>
+
+      <!-- Projects Section -->
+      <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 shadow-md">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+          <div>
+            <h2 class="text-base font-semibold text-white flex items-center gap-2">
+              <span>Managed Repositories</span>
+              <span id="projects-count-tag" class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono">0 repos</span>
+            </h2>
+          </div>
+          <div class="relative w-full sm:w-64">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+            <input type="text" id="project-search-input" oninput="filterProjectsGrid()" placeholder="Filter repositories..." class="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+
+        <!-- Projects Grid / Cards -->
+        <div id="projects-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <!-- Dynamically populated project cards -->
+          <div class="col-span-full py-12 text-center text-slate-500">
+            <i class="fa-solid fa-circle-notch animate-spin text-2xl mb-3 text-indigo-500"></i>
+            <p class="text-xs">Loading managed projects from registry...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Incremental Sync Mechanism Educational Banner -->
+      <div class="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="flex items-start gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-code-compare text-base"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-slate-200">Incremental Git Code Update Mechanism</h3>
+            <p class="text-xs text-slate-400 mt-0.5 leading-relaxed">
+              When developers push updates to Git, clicking <strong class="text-indigo-300">Sync</strong> pulls latest commits, diffs modified/added/deleted files, purges old AST chunks, and embeds only the changed code—saving 95% compute without needing a complex CI/CD pipeline.
+            </p>
+          </div>
+        </div>
+        <div class="shrink-0 flex items-center gap-2">
+          <span class="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-emerald-400">
+            <i class="fa-solid fa-bolt mr-1"></i> Sub-second diff
+          </span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ================= PAGE 2: DEVELOPER CHAT (CHATGPT / ANTIGRAVITY STYLE) ================= -->
+    <section id="page-chat" class="flex-1 flex overflow-hidden">
+
+      <!-- Left Project & History Sidebar -->
+      <aside id="chat-sidebar" class="w-72 lg:w-80 bg-[#0f172a] border-r border-slate-800 flex flex-col shrink-0 transition-all duration-300">
+        
+        <!-- Sidebar Header: Project Selector (Antigravity Style) -->
+        <div class="p-3.5 border-b border-slate-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Repository</span>
+            <button onclick="switchTab('manager')" title="Manage repositories" class="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+              <i class="fa-solid fa-gear"></i>
+              <span>Manage</span>
+            </button>
+          </div>
+
+          <!-- Project Dropdown Picker -->
+          <div class="relative">
+            <select id="chat-project-select" onchange="onProjectSelectChange(this.value)" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-xs font-medium text-white appearance-none focus:outline-none focus:border-indigo-500 cursor-pointer">
+              <option value="" disabled selected>Loading repositories...</option>
+            </select>
+            <i class="fa-solid fa-chevron-down absolute right-3 top-3 text-slate-400 pointer-events-none text-xs"></i>
+          </div>
+
+          <!-- New Chat Button -->
+          <button onclick="startNewChat()" class="w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700/80 text-xs font-medium text-slate-200 flex items-center justify-center gap-2 transition shadow-sm">
+            <i class="fa-solid fa-plus text-indigo-400"></i>
+            <span>New Conversation</span>
+          </button>
+        </div>
+
+        <!-- Selected Project Metadata Snapshot -->
+        <div id="sidebar-project-details" class="px-3.5 py-3 border-b border-slate-800/80 bg-slate-950/40 text-[11px] space-y-1.5 font-mono">
+          <div class="flex items-center justify-between text-slate-400">
+            <span>Branch:</span>
+            <span id="sidebar-branch" class="text-indigo-300 font-semibold truncate max-w-[130px]">main</span>
+          </div>
+          <div class="flex items-center justify-between text-slate-400">
+            <span>Commit:</span>
+            <span id="sidebar-commit" class="text-slate-300 truncate max-w-[130px]">b77a50d</span>
+          </div>
+          <div class="flex items-center justify-between text-slate-400">
+            <span>Chunks:</span>
+            <span id="sidebar-chunks" class="text-emerald-400 font-semibold">0</span>
+          </div>
+          <div class="flex items-center justify-between text-slate-400">
+            <span>Verification:</span>
+            <span class="text-emerald-400 font-sans font-medium flex items-center gap-1">
+              <i class="fa-solid fa-shield-check text-[10px]"></i> 4-Layer Active
+            </span>
+          </div>
+        </div>
+
+        <!-- Recent Chat History List -->
+        <div class="flex-1 overflow-y-auto p-2 space-y-1">
+          <div class="px-2 py-1 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Recent Queries</div>
+          <div id="recent-queries-list" class="space-y-1">
+            <!-- Dynamically populated queries -->
+            <div class="px-2 py-2 text-xs text-slate-500 italic">No previous queries in session</div>
+          </div>
+        </div>
+
+        <!-- Offline Air-gapped Footer Indicator -->
+        <div class="p-3 border-t border-slate-800 bg-slate-950/70 text-[11px] text-slate-400 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>qwen2.5-coder:1.5b</span>
+          </div>
+          <span class="text-[10px] text-slate-500 font-mono">Air-gapped</span>
+        </div>
+      </aside>
+
+      <!-- Main Chat Area -->
+      <div class="flex-1 flex flex-col bg-[#0b0f19] overflow-hidden relative">
+
+        <!-- Chat Header Bar -->
+        <div class="h-12 border-b border-slate-800/80 px-4 flex items-center justify-between bg-[#0f172a]/60 backdrop-blur shrink-0">
+          <div class="flex items-center gap-2 text-xs">
+            <button onclick="toggleSidebar()" class="lg:hidden p-1.5 rounded-lg hover:bg-slate-800 text-slate-400">
+              <i class="fa-solid fa-bars"></i>
+            </button>
+            <span class="text-slate-400 font-medium">Assistant on:</span>
+            <span id="chat-header-project-name" class="font-semibold text-white">CropChain</span>
+            <span id="chat-header-badge" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">repo_3e9c5a1753fa</span>
+          </div>
+          <div class="flex items-center gap-2 text-xs">
+            <button onclick="clearChatMessages()" title="Clear conversation" class="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Messages Thread -->
+        <div id="messages-container" class="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6">
+          
+          <!-- Empty State (Welcome & Sample Prompts) -->
+          <div id="chat-welcome-state" class="max-w-2xl mx-auto py-12 text-center space-y-6">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center mx-auto shadow-xl shadow-indigo-600/20 text-white text-2xl font-bold">
+              <i class="fa-solid fa-terminal"></i>
+            </div>
+            <div>
+              <h2 class="text-xl font-bold text-white tracking-tight">Ask anything about <span id="welcome-project-name" class="text-indigo-400">CropChain</span></h2>
+              <p class="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+                Responses are verified by a 4-Layer Zero-Trust static engine before display. Real code receives 🟢 VERIFIED; hallucinations are caught as 🔴 REJECTED.
+              </p>
+            </div>
+
+            <!-- Starter Prompt Chips -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-left pt-2">
+              <button onclick="submitSuggestedQuery('Which routes require the user to be an admin?')" class="p-3 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 text-left transition group">
+                <span class="text-[10px] uppercase font-mono text-indigo-400 font-semibold block mb-0.5">Authorization & Routes</span>
+                <span class="text-xs text-slate-200 group-hover:text-white font-medium">Which routes require the user to be an admin?</span>
+              </button>
+              <button onclick="submitSuggestedQuery('How is user password authentication checked during login?')" class="p-3 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 text-left transition group">
+                <span class="text-[10px] uppercase font-mono text-emerald-400 font-semibold block mb-0.5">Authentication Logic</span>
+                <span class="text-xs text-slate-200 group-hover:text-white font-medium">How is user password authentication checked during login?</span>
+              </button>
+              <button onclick="submitSuggestedQuery('What endpoint is used by farmers to add a new crop listing?')" class="p-3 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 text-left transition group">
+                <span class="text-[10px] uppercase font-mono text-purple-400 font-semibold block mb-0.5">API Endpoints</span>
+                <span class="text-xs text-slate-200 group-hover:text-white font-medium">What endpoint is used by farmers to add a new crop listing?</span>
+              </button>
+              <button onclick="submitSuggestedQuery('How does CropChain use escape-html and react-dom/server to render SSR templates?')" class="p-3 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 text-left transition group">
+                <span class="text-[10px] uppercase font-mono text-rose-400 font-semibold block mb-0.5">Hallucination Trap Test</span>
+                <span class="text-xs text-slate-200 group-hover:text-white font-medium">How does CropChain render SSR with escape-html & react-dom?</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Active Message Feed (dynamically filled) -->
+          <div id="messages-feed" class="max-w-4xl mx-auto space-y-6"></div>
+
+        </div>
+
+        <!-- Chat Input Form -->
+        <div class="p-3 lg:p-4 bg-[#0f172a] border-t border-slate-800 shrink-0">
+          <form id="chat-form" onsubmit="handleChatSubmit(event)" class="max-w-4xl mx-auto relative">
+            <textarea
+              id="query-input"
+              rows="1"
+              onkeydown="handleInputKeyDown(event)"
+              placeholder="Ask a technical query about the codebase... (e.g. Which middleware protects DELETE /users/:id?)"
+              class="w-full bg-slate-900 border border-slate-700/80 rounded-2xl pl-4 pr-12 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-none max-h-36 shadow-inner"
+            ></textarea>
+            <button
+              type="submit"
+              id="send-btn"
+              class="absolute right-2.5 bottom-2.5 w-8 h-8 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white flex items-center justify-center transition shadow-md shadow-indigo-600/30"
+            >
+              <i class="fa-solid fa-arrow-up text-xs" id="send-btn-icon"></i>
+            </button>
+          </form>
+          <div class="max-w-4xl mx-auto flex items-center justify-between text-[11px] text-slate-500 mt-1.5 px-2">
+            <span>Press <kbd class="px-1 py-0.5 bg-slate-800 rounded font-mono text-[10px]">Enter</kbd> to send, <kbd class="px-1 py-0.5 bg-slate-800 rounded font-mono text-[10px]">Shift+Enter</kbd> for newline</span>
+            <span class="text-emerald-400 flex items-center gap-1 font-mono">
+              <i class="fa-solid fa-check-double text-[10px]"></i> Zero-Trust Protected
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= MODAL: INGEST NEW REPO ================= -->
+  <div id="ingest-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-cloud-arrow-up text-indigo-400"></i>
+          Add & Index Repository
+        </h3>
+        <button onclick="closeIngestModal()" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="ingest-form" onsubmit="handleIngestSubmit(event)" class="mt-4 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Repository Git URL or Local Path *</label>
+          <input
+            type="text"
+            id="ingest-url"
+            required
+            placeholder="e.g. https://github.com/owner/repository.git or C:\path\to\repo"
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono"
+          >
+          <span class="block text-[11px] text-slate-500 mt-1">Accepts GitHub, GitLab, Bitbucket URLs, or local directories.</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Project Display Name (Optional)</label>
+          <input
+            type="text"
+            id="ingest-name"
+            placeholder="e.g. CropChain Core / Auth Service"
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+          >
+        </div>
+
+        <!-- Progress Indicator (Hidden by default) -->
+        <div id="ingest-progress" class="hidden space-y-2 p-3 bg-slate-950 rounded-xl border border-slate-800">
+          <div class="flex items-center justify-between text-xs font-mono text-indigo-400">
+            <span id="ingest-step-text">Cloning repository...</span>
+            <i class="fa-solid fa-circle-notch animate-spin"></i>
+          </div>
+          <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+            <div id="ingest-progress-bar" class="bg-indigo-500 h-1.5 rounded-full w-1/3 transition-all duration-300"></div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button type="button" onclick="closeIngestModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium">Cancel</button>
+          <button type="submit" id="ingest-submit-btn" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-2 shadow-lg shadow-indigo-600/30">
+            <i class="fa-solid fa-arrow-down-to-bracket"></i>
+            <span>Clone & Index Codebase</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: PROJECT DETAILS & FILES ================= -->
+  <div id="details-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0">
+        <div>
+          <h3 id="details-project-name" class="text-base font-bold text-white">Project Details</h3>
+          <span id="details-project-id" class="text-[11px] font-mono text-indigo-400">repo_...</span>
+        </div>
+        <button onclick="closeDetailsModal()" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto py-4 space-y-4">
+        <!-- Files List -->
+        <div>
+          <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Indexed Source Files & Symbols</h4>
+          <div id="details-files-list" class="space-y-2 text-xs font-mono">
+            <div class="p-3 text-slate-500 italic">Loading file tree...</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-800 flex justify-end shrink-0">
+        <button onclick="closeDetailsModal()" class="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: USER LOGIN & REGISTRATION ================= -->
+  <div id="auth-modal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative overflow-hidden">
+      <!-- Ambient Glow -->
+      <div class="absolute -top-16 -right-16 w-32 h-32 bg-indigo-600/20 rounded-full blur-2xl pointer-events-none"></div>
+
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+            <i class="fa-solid fa-shield-halved text-sm"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">Authentication Portal</h3>
+            <p class="text-[11px] text-slate-400">Role-based access for Manager & Developer</p>
+          </div>
+        </div>
+        <button onclick="closeAuthModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Auth Mode Switcher (Login vs Register) -->
+      <div class="flex items-center gap-1 mt-4 p-1 bg-slate-950 rounded-xl border border-slate-800">
+        <button id="auth-tab-login" onclick="switchAuthTab('login')" class="flex-1 py-1.5 text-xs font-semibold rounded-lg transition bg-indigo-600 text-white shadow">
+          <i class="fa-solid fa-arrow-right-to-bracket mr-1.5"></i>Log In
+        </button>
+        <button id="auth-tab-register" onclick="switchAuthTab('register')" class="flex-1 py-1.5 text-xs font-semibold rounded-lg transition text-slate-400 hover:text-white">
+          <i class="fa-solid fa-user-plus mr-1.5"></i>Create Account
+        </button>
+      </div>
+
+      <!-- TAB 1: LOGIN FORM -->
+      <form id="form-login" onsubmit="handleLoginSubmit(event)" class="mt-4 space-y-3.5">
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">Username or Email</label>
+          <div class="relative">
+            <i class="fa-solid fa-user absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+            <input
+              type="text"
+              id="login-username"
+              required
+              placeholder="e.g. manager or dev"
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-sans"
+            >
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">Password</label>
+          <div class="relative">
+            <i class="fa-solid fa-lock absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+            <input
+              type="password"
+              id="login-password"
+              required
+              placeholder="••••••••"
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-sans"
+            >
+          </div>
+        </div>
+
+        <!-- 1-Click Demo Credentials -->
+        <div class="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1.5">
+          <div class="text-[10px] text-slate-400 font-medium">Quick Demo Accounts:</div>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="fillDemoCredentials('manager')" class="flex-1 px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700 border border-slate-700/60 text-[11px] text-indigo-300 font-medium flex items-center justify-center gap-1.5 transition">
+              <i class="fa-solid fa-user-tie text-[10px]"></i>
+              <span>Manager (admin123)</span>
+            </button>
+            <button type="button" onclick="fillDemoCredentials('dev')" class="flex-1 px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700 border border-slate-700/60 text-[11px] text-emerald-300 font-medium flex items-center justify-center gap-1.5 transition">
+              <i class="fa-solid fa-code text-[10px]"></i>
+              <span>Developer (dev123)</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="login-error" class="hidden text-rose-400 text-xs p-2 rounded-lg bg-rose-950/40 border border-rose-900/50"></div>
+
+        <button type="submit" id="btn-login-submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center justify-center gap-2 transition shadow-lg shadow-indigo-600/30">
+          <span>Sign In</span>
+          <i class="fa-solid fa-arrow-right text-xs"></i>
+        </button>
+      </form>
+
+      <!-- TAB 2: REGISTER FORM -->
+      <form id="form-register" onsubmit="handleRegisterSubmit(event)" class="hidden mt-4 space-y-3.5">
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">Username</label>
+          <div class="relative">
+            <i class="fa-solid fa-at absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+            <input
+              type="text"
+              id="reg-username"
+              required
+              minlength="3"
+              placeholder="e.g. alex_coder"
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-sans"
+            >
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">Email (Optional)</label>
+          <div class="relative">
+            <i class="fa-solid fa-envelope absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+            <input
+              type="email"
+              id="reg-email"
+              placeholder="alex@company.com"
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-sans"
+            >
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">Password</label>
+          <div class="relative">
+            <i class="fa-solid fa-key absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+            <input
+              type="password"
+              id="reg-password"
+              required
+              minlength="4"
+              placeholder="Minimum 4 characters"
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-sans"
+            >
+          </div>
+        </div>
+
+        <!-- Role Selection -->
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Role</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="cursor-pointer border border-slate-800 p-2.5 rounded-xl bg-slate-950/60 hover:border-indigo-500 flex items-start gap-2 text-xs transition has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-950/30">
+              <input type="radio" name="reg-role" value="developer" checked class="mt-0.5 text-indigo-600 focus:ring-0">
+              <div>
+                <div class="font-semibold text-white">Developer</div>
+                <div class="text-[10px] text-slate-400">Ask queries, verify code & inspect symbols</div>
+              </div>
+            </label>
+            <label class="cursor-pointer border border-slate-800 p-2.5 rounded-xl bg-slate-950/60 hover:border-indigo-500 flex items-start gap-2 text-xs transition has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-950/30">
+              <input type="radio" name="reg-role" value="manager" class="mt-0.5 text-indigo-600 focus:ring-0">
+              <div>
+                <div class="font-semibold text-white">Manager</div>
+                <div class="text-[10px] text-slate-400">Add repos, delete & sync updates</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div id="reg-error" class="hidden text-rose-400 text-xs p-2 rounded-lg bg-rose-950/40 border border-rose-900/50"></div>
+
+        <button type="submit" id="btn-reg-submit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-600/30">
+          <span>Create Account & Sign In</span>
+          <i class="fa-solid fa-check text-xs"></i>
+        </button>
+      </form>
+
+      <!-- Advanced Direct Token Config -->
+      <details class="mt-4 pt-3 border-t border-slate-800 text-[11px] group">
+        <summary class="cursor-pointer text-slate-500 hover:text-slate-300 flex items-center justify-between">
+          <span>Advanced: Direct Root Secret Token</span>
+          <i class="fa-solid fa-chevron-down group-open:rotate-180 transition text-[10px]"></i>
+        </summary>
+        <div class="mt-2.5 space-y-2">
+          <input
+            type="text"
+            id="auth-token-input"
+            placeholder="test-secret-token"
+            class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 font-mono focus:outline-none focus:border-indigo-500"
+          >
+          <div class="flex justify-end">
+            <button type="button" onclick="saveDirectAuthToken()" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium">Save Direct Token</button>
+          </div>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <!-- ================= JAVASCRIPT APPLICATION LOGIC ================= -->
+  <script>
+    // State management
+    let projects = [];
+    let activeProjectId = '';
+    let currentTab = 'chat';
+    let chatHistory = [];
+    let isSubmitting = false;
+
+    // Default Auth Token setup
+    const DEFAULT_AUTH_TOKEN = 'test-secret-token';
+    function getAuthToken() {
+      return localStorage.getItem('rag_auth_token') || DEFAULT_AUTH_TOKEN;
+    }
+    function setAuthToken(t) {
+      if (t) {
+        localStorage.setItem('rag_auth_token', t.trim());
+      } else {
+        localStorage.removeItem('rag_auth_token');
+      }
+    }
+    function getCurrentUser() {
+      try {
+        const u = localStorage.getItem('rag_user');
+        return u ? JSON.parse(u) : null;
+      } catch (_) {
+        return null;
+      }
+    }
+    function setCurrentUser(user) {
+      if (user) {
+        localStorage.setItem('rag_user', JSON.stringify(user));
+      } else {
+        localStorage.removeItem('rag_user');
+      }
+      updateAuthHeaderUI();
+    }
+
+    // API Helper with Bearer header
+    async function apiFetch(endpoint, options = {}) {
+      const token = getAuthToken();
+      const headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        ...(options.headers || {})
+      };
+      const res = await fetch(endpoint, { ...options, headers });
+      if (!res.ok) {
+        let errMsg = `Error ${res.status}: ${res.statusText}`;
+        try {
+          const errData = await res.json();
+          errMsg = errData.detail || errMsg;
+        } catch (_) {}
+        throw new Error(errMsg);
+      }
+      return res.json();
+    }
+
+    // Tab Switching
+    function switchTab(tab) {
+      currentTab = tab;
+      const pageManager = document.getElementById('page-manager');
+      const pageChat = document.getElementById('page-chat');
+      const btnManager = document.getElementById('nav-btn-manager');
+      const btnChat = document.getElementById('nav-btn-chat');
+
+      applyRoleUI();
+
+      if (tab === 'manager') {
+        pageManager.classList.remove('hidden');
+        pageChat.classList.add('hidden');
+        btnManager.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-2 bg-indigo-600 text-white shadow";
+        btnChat.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800";
+        refreshProjects();
+      } else {
+        pageChat.classList.remove('hidden');
+        pageManager.classList.add('hidden');
+        btnChat.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-2 bg-indigo-600 text-white shadow";
+        btnManager.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800";
+      }
+    }
+
+    // Toggle Sidebar on Mobile
+    function toggleSidebar() {
+      const sidebar = document.getElementById('chat-sidebar');
+      sidebar.classList.toggle('hidden');
+    }
+
+    // Load Projects List from Server
+    async function refreshProjects() {
+      const refreshIcon = document.getElementById('refresh-icon');
+      if (refreshIcon) refreshIcon.classList.add('animate-spin');
+
+      try {
+        projects = await apiFetch('/api/v1/projects');
+        renderProjectsGrid();
+        renderProjectDropdown();
+        updateGlobalStats();
+      } catch (err) {
+        console.error('Failed to load projects:', err);
+      } finally {
+        if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+      }
+    }
+
+    // Update Global Statistics Numbers
+    function updateGlobalStats() {
+      const totalProjects = projects.length;
+      let totalChunks = 0;
+      let totalSymbols = 0;
+
+      projects.forEach(p => {
+        totalChunks += (p.chunks_count || 0);
+        totalSymbols += (p.symbols_count || 0);
+      });
+
+      document.getElementById('stat-total-projects').textContent = totalProjects;
+      document.getElementById('stat-total-chunks').textContent = totalChunks;
+      document.getElementById('stat-total-symbols').textContent = totalSymbols;
+      document.getElementById('nav-project-badge').textContent = totalProjects;
+      document.getElementById('projects-count-tag').textContent = `${totalProjects} repo${totalProjects === 1 ? '' : 's'}`;
+    }
+
+    // Global Role-Based Access Control UI Dispatcher
+    function applyRoleUI() {
+      const user = getCurrentUser();
+      const isManager = user ? (user.role === 'manager') : true;
+      const isDev = user ? (user.role === 'developer') : false;
+
+      // 1. Update Top Navbar Tab Label
+      const navManagerBtn = document.getElementById('nav-btn-manager');
+      if (navManagerBtn) {
+        const span = navManagerBtn.querySelector('span');
+        if (span) {
+          span.textContent = isDev ? 'Repositories (Read-Only)' : 'Manager Dashboard';
+        }
+      }
+
+      // 2. Update Header Banner
+      const devBanner = document.getElementById('developer-role-banner');
+      const mgrBanner = document.getElementById('manager-role-banner');
+      if (devBanner && mgrBanner) {
+        if (isDev) {
+          devBanner.classList.remove('hidden');
+          mgrBanner.classList.add('hidden');
+        } else if (user && isManager) {
+          mgrBanner.classList.remove('hidden');
+          devBanner.classList.add('hidden');
+        } else {
+          devBanner.classList.add('hidden');
+          mgrBanner.classList.add('hidden');
+        }
+      }
+
+      // 3. "+ Add Repository" button visibility
+      const addRepoBtn = document.getElementById('btn-add-repo-main');
+      if (addRepoBtn) {
+        if (isDev) {
+          addRepoBtn.classList.add('hidden'); // Completely hidden for Developers!
+        } else {
+          addRepoBtn.classList.remove('hidden');
+          addRepoBtn.className = "px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 text-xs font-semibold flex items-center gap-2 transition";
+        }
+      }
+    }
+
+    // Render Projects Grid on Manager Page with RBAC
+    function renderProjectsGrid(filterText = '') {
+      applyRoleUI();
+      const grid = document.getElementById('projects-grid');
+      const user = getCurrentUser();
+      const isManager = user ? (user.role === 'manager') : true;
+
+      const filtered = projects.filter(p => {
+        const text = `${p.name} ${p.id} ${p.repo_url} ${p.branch}`.toLowerCase();
+        return text.includes(filterText.toLowerCase());
+      });
+
+      if (!filtered.length) {
+        grid.innerHTML = `
+          <div class="col-span-full py-12 text-center text-slate-500">
+            <i class="fa-solid fa-folder-open text-3xl mb-2 text-slate-600"></i>
+            <p class="text-xs">No repositories match your filter.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(p => `
+        <div class="bg-slate-900/90 border border-slate-800 hover:border-slate-700/80 rounded-2xl p-4 shadow-sm flex flex-col justify-between transition group">
+          <div>
+            <!-- Card Header -->
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <div>
+                <h3 class="text-sm font-bold text-white group-hover:text-indigo-300 transition flex items-center gap-1.5">
+                  <i class="fa-solid fa-book-bookmark text-indigo-400 text-xs"></i>
+                  ${escapeHtml(p.name)}
+                </h3>
+                <span class="text-[11px] font-mono text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">${p.id}</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono ${p.status === 'ready' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">
+                ● ${p.status || 'ready'}
+              </span>
+            </div>
+
+            <!-- Repo Source & Commit Details -->
+            <p class="text-[11px] text-slate-400 truncate mb-3" title="${escapeHtml(p.repo_url)}">
+              <i class="fa-solid fa-link text-[10px] mr-1 text-slate-500"></i>${escapeHtml(p.repo_url)}
+            </p>
+
+            <div class="bg-slate-950/80 rounded-xl p-2.5 border border-slate-800/80 text-[11px] font-mono space-y-1 mb-3">
+              <div class="flex items-center justify-between text-slate-400">
+                <span>Branch:</span>
+                <span class="text-indigo-300 font-semibold truncate max-w-[130px]">${escapeHtml(p.branch || 'main')}</span>
+              </div>
+              <div class="flex items-center justify-between text-slate-400">
+                <span>Commit:</span>
+                <span class="text-slate-300 truncate max-w-[130px]" title="${p.commit_message || ''}">${p.current_commit ? p.current_commit.substring(0, 7) : 'initial'}</span>
+              </div>
+              <div class="flex items-center justify-between text-slate-400">
+                <span>AST Chunks:</span>
+                <span class="text-emerald-400 font-semibold">${p.chunks_count || 0}</span>
+              </div>
+              <div class="flex items-center justify-between text-slate-400">
+                <span>Symbols / Graph:</span>
+                <span class="text-purple-300">${p.symbols_count || 0} / ${p.call_graph_nodes || 0}n</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Actions Footer (Role-Gated) -->
+          <div class="pt-2 border-t border-slate-800 flex items-center justify-between gap-1.5">
+            ${isManager ? `
+              <button onclick="triggerSync('${p.id}', this)" title="Incremental Git Update" class="px-2.5 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 text-xs font-medium flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-arrows-rotate text-[11px]"></i>
+                <span>Sync</span>
+              </button>
+            ` : ''}
+
+            <button onclick="selectAndOpenChat('${p.id}')" title="Open in Developer Chat" class="${isManager ? 'px-2.5' : 'flex-1'} py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium flex items-center justify-center gap-1.5 transition">
+              <i class="fa-solid fa-comments text-[11px] text-emerald-400"></i>
+              <span>Chat</span>
+            </button>
+            <button onclick="viewProjectDetails('${p.id}')" title="Inspect files and symbols" class="${isManager ? 'p-1.5' : 'px-3 py-1.5'} rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 text-xs transition flex items-center gap-1.5">
+              <i class="fa-solid fa-list-check"></i>
+              ${isManager ? '' : '<span>Inspect</span>'}
+            </button>
+
+            ${isManager ? `
+              <button onclick="confirmDeleteProject('${p.id}', '${escapeHtml(p.name)}')" title="Delete project" class="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs transition">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterProjectsGrid() {
+      const q = document.getElementById('project-search-input').value;
+      renderProjectsGrid(q);
+    }
+
+    // Populate Project Select Dropdown in Developer Chat
+    function renderProjectDropdown() {
+      const select = document.getElementById('chat-project-select');
+      if (!projects.length) {
+        select.innerHTML = '<option value="" disabled selected>No repositories available</option>';
+        return;
+      }
+
+      // Preserve active or pick first
+      if (!activeProjectId || !projects.find(p => p.id === activeProjectId)) {
+        // Prefer repo_3e9c5a1753fa if available, else first
+        const cropchain = projects.find(p => p.id === 'repo_3e9c5a1753fa');
+        activeProjectId = cropchain ? cropchain.id : projects[0].id;
+      }
+
+      select.innerHTML = projects.map(p => `
+        <option value="${p.id}" ${p.id === activeProjectId ? 'selected' : ''}>
+          ${escapeHtml(p.name)} (${p.chunks_count || 0} chunks)
+        </option>
+      `).join('');
+
+      updateActiveProjectUI();
+    }
+
+    // When user changes active project in Chat Sidebar
+    function onProjectSelectChange(repoId) {
+      activeProjectId = repoId;
+      updateActiveProjectUI();
+      startNewChat();
+    }
+
+    function selectAndOpenChat(repoId) {
+      activeProjectId = repoId;
+      switchTab('chat');
+      renderProjectDropdown();
+      updateActiveProjectUI();
+    }
+
+    // Update UI elements showing active project
+    function updateActiveProjectUI() {
+      const activeProj = projects.find(p => p.id === activeProjectId);
+      if (!activeProj) return;
+
+      document.getElementById('top-project-name').textContent = activeProj.name;
+      document.getElementById('chat-header-project-name').textContent = activeProj.name;
+      document.getElementById('chat-header-badge').textContent = activeProj.id;
+      document.getElementById('welcome-project-name').textContent = activeProj.name;
+
+      document.getElementById('sidebar-branch').textContent = activeProj.branch || 'main';
+      document.getElementById('sidebar-commit').textContent = activeProj.current_commit ? activeProj.current_commit.substring(0, 7) : 'latest';
+      document.getElementById('sidebar-chunks').textContent = activeProj.chunks_count || 0;
+    }
+
+    // ================= INCREMENTAL GIT UPDATE =================
+    async function triggerSync(repoId, btnElement) {
+      const user = getCurrentUser();
+      if (user && user.role !== 'manager') {
+        showNotification("Permission Denied: Only users with 'Manager' role can trigger Git sync.", "error");
+        return;
+      }
+
+      const originalHtml = btnElement.innerHTML;
+      btnElement.disabled = true;
+      btnElement.innerHTML = `<i class="fa-solid fa-arrows-rotate animate-spin text-[11px]"></i> <span>Syncing...</span>`;
+
+      try {
+        const result = await apiFetch(`/api/v1/projects/${repoId}/sync`, { method: 'POST' });
+        
+        let msg = result.message || 'Sync completed!';
+        if (result.status === 'UP_TO_DATE') {
+          showNotification(`🟢 ${result.message}`, 'success');
+        } else if (result.status === 'SYNCED') {
+          showNotification(`🚀 Incremental Update: ${result.files_modified?.length || 0} modified, ${result.files_added?.length || 0} added (${result.chunks_added || 0} chunks re-embedded).`, 'success');
+        } else {
+          showNotification(`Updated: ${msg}`, 'info');
+        }
+
+        await refreshProjects();
+      } catch (err) {
+        showNotification(`Sync failed: ${err.message}`, 'error');
+      } finally {
+        btnElement.disabled = false;
+        btnElement.innerHTML = originalHtml;
+      }
+    }
+
+    // ================= DELETE PROJECT =================
+    async function confirmDeleteProject(repoId, repoName) {
+      const user = getCurrentUser();
+      if (user && user.role !== 'manager') {
+        showNotification("Permission Denied: Only users with 'Manager' role can delete projects.", "error");
+        return;
+      }
+
+      if (!confirm(`Are you sure you want to permanently delete project '${repoName}' (${repoId})?\n\nThis will purge its Qdrant vectors and local repository files.`)) {
+        return;
+      }
+
+      try {
+        await apiFetch(`/api/v1/projects/${repoId}`, { method: 'DELETE' });
+        showNotification(`Project '${repoName}' deleted successfully.`, 'success');
+        await refreshProjects();
+        if (activeProjectId === repoId) {
+          activeProjectId = projects.length ? projects[0].id : '';
+          renderProjectDropdown();
+        }
+      } catch (err) {
+        showNotification(`Delete failed: ${err.message}`, 'error');
+      }
+    }
+
+    // ================= VIEW PROJECT DETAILS =================
+    async function viewProjectDetails(repoId) {
+      const proj = projects.find(p => p.id === repoId);
+      document.getElementById('details-project-name').textContent = proj ? proj.name : 'Project Details';
+      document.getElementById('details-project-id').textContent = repoId;
+      document.getElementById('details-files-list').innerHTML = `<div class="p-3 text-slate-500 italic"><i class="fa-solid fa-spinner animate-spin mr-2"></i>Loading file tree...</div>`;
+      document.getElementById('details-modal').classList.remove('hidden');
+
+      try {
+        const data = await apiFetch(`/api/v1/projects/${repoId}/files`);
+        const files = data.files || [];
+        if (!files.length) {
+          document.getElementById('details-files-list').innerHTML = `<div class="p-3 text-slate-500 italic">No files indexed for this repository.</div>`;
+          return;
+        }
+
+        document.getElementById('details-files-list').innerHTML = files.map(f => `
+          <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+            <div class="flex items-center justify-between">
+              <span class="text-indigo-300 font-semibold flex items-center gap-1.5">
+                <i class="fa-solid fa-file-code text-slate-500"></i> ${escapeHtml(f.file_path)}
+              </span>
+              <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded">${f.chunks_count} chunk${f.chunks_count === 1 ? '' : 's'}</span>
+            </div>
+            ${f.symbols && f.symbols.length ? `
+              <div class="mt-2 pl-4 border-l border-slate-800 space-y-1">
+                ${f.symbols.map(s => `
+                  <div class="flex items-center justify-between text-[10px] text-slate-400">
+                    <span class="text-slate-300 truncate max-w-[280px]"><code>${escapeHtml(s.symbol || '')}</code></span>
+                    <span class="text-slate-500 font-mono">${s.symbol_type || 'fn'} · L${s.lines || ''}</span>
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+          </div>
+        `).join('');
+
+      } catch (err) {
+        document.getElementById('details-files-list').innerHTML = `<div class="p-3 text-rose-400 text-xs">Error loading files: ${err.message}</div>`;
+      }
+    }
+    function closeDetailsModal() {
+      document.getElementById('details-modal').classList.add('hidden');
+    }
+
+    // ================= INGEST NEW PROJECT =================
+    function openIngestModal() {
+      const user = getCurrentUser();
+      if (user && user.role !== 'manager') {
+        showNotification("Permission Denied: Only users with 'Manager' role can add new repositories. Switch to a Manager account.", "error");
+        return;
+      }
+      document.getElementById('ingest-url').value = '';
+      document.getElementById('ingest-name').value = '';
+      document.getElementById('ingest-progress').classList.add('hidden');
+      document.getElementById('ingest-submit-btn').disabled = false;
+      document.getElementById('ingest-modal').classList.remove('hidden');
+    }
+    function closeIngestModal() {
+      document.getElementById('ingest-modal').classList.add('hidden');
+    }
+
+    async function handleIngestSubmit(e) {
+      e.preventDefault();
+      const repoUrl = document.getElementById('ingest-url').value.trim();
+      const displayName = document.getElementById('ingest-name').value.trim();
+      const progressBox = document.getElementById('ingest-progress');
+      const stepText = document.getElementById('ingest-step-text');
+      const submitBtn = document.getElementById('ingest-submit-btn');
+
+      if (!repoUrl) return;
+
+      progressBox.classList.remove('hidden');
+      submitBtn.disabled = true;
+      stepText.textContent = "Cloning & scanning AST units (may take a moment)...";
+
+      try {
+        const payload = { repo_url: repoUrl };
+        if (displayName) payload.name = displayName;
+
+        const result = await apiFetch('/api/v1/projects', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        showNotification(`Repository '${result.name || result.repo_id}' indexed successfully (${result.indexed_chunks || 0} chunks)!`, 'success');
+        closeIngestModal();
+        await refreshProjects();
+        selectAndOpenChat(result.repo_id);
+
+      } catch (err) {
+        showNotification(`Ingestion failed: ${err.message}`, 'error');
+        progressBox.classList.add('hidden');
+        submitBtn.disabled = false;
+      }
+    }
+
+    // ================= DEVELOPER CHAT INTERFACE =================
+    function startNewChat() {
+      document.getElementById('messages-feed').innerHTML = '';
+      document.getElementById('chat-welcome-state').classList.remove('hidden');
+      document.getElementById('query-input').value = '';
+      document.getElementById('query-input').focus();
+    }
+
+    function clearChatMessages() {
+      startNewChat();
+    }
+
+    function submitSuggestedQuery(q) {
+      document.getElementById('query-input').value = q;
+      handleChatSubmit(new Event('submit'));
+    }
+
+    function handleInputKeyDown(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleChatSubmit(e);
+      }
+    }
+
+    async function handleChatSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('query-input');
+      const query = input.value.trim();
+      if (!query || isSubmitting) return;
+
+      const activeRepoId = activeProjectId || (projects.length ? projects[0].id : 'repo_3e9c5a1753fa');
+
+      // Hide welcome state
+      document.getElementById('chat-welcome-state').classList.add('hidden');
+      const feed = document.getElementById('messages-feed');
+
+      // Append User Message Bubble
+      const userMsgId = `msg-user-${Date.now()}`;
+      feed.insertAdjacentHTML('beforeend', `
+        <div id="${userMsgId}" class="flex items-start gap-3 justify-end">
+          <div class="bg-indigo-600 text-white px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-xl text-sm shadow">
+            ${escapeHtml(query)}
+          </div>
+          <div class="w-8 h-8 rounded-xl bg-slate-700 flex items-center justify-center text-xs text-white shrink-0 font-bold">
+            <i class="fa-solid fa-user"></i>
+          </div>
+        </div>
+      `);
+
+      // Append Assistant Loading Indicator Bubble
+      const assistantMsgId = `msg-assistant-${Date.now()}`;
+      feed.insertAdjacentHTML('beforeend', `
+        <div id="${assistantMsgId}" class="flex items-start gap-3">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-xs text-white shrink-0 font-bold shadow-md shadow-indigo-600/20">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl rounded-tl-sm max-w-3xl w-full text-sm space-y-3 shadow-lg">
+            <div class="flex items-center gap-2 text-indigo-400 font-mono text-xs">
+              <i class="fa-solid fa-circle-notch animate-spin"></i>
+              <span>Retrieving AST chunks & executing 4-Layer Verification...</span>
+            </div>
+          </div>
+        </div>
+      `);
+
+      scrollChatToBottom();
+      input.value = '';
+      setSubmittingState(true);
+
+      // Record to recent queries
+      addRecentQuery(query);
+
+      try {
+        const payload = {
+          query: query,
+          repo_id: activeRepoId
+        };
+
+        const res = await apiFetch('/api/v1/userquery', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        // Replace loading with real response
+        renderAssistantResponse(assistantMsgId, res);
+
+      } catch (err) {
+        const container = document.getElementById(assistantMsgId);
+        if (container) {
+          container.querySelector('.bg-slate-900').innerHTML = `
+            <div class="text-rose-400 text-xs font-mono">
+              <i class="fa-solid fa-circle-exclamation mr-1"></i> Request Failed: ${escapeHtml(err.message)}
+            </div>
+            <div class="text-[11px] text-slate-500">
+              Verify that Ollama is running and Bearer Auth Token is properly configured.
+            </div>
+          `;
+        }
+      } finally {
+        setSubmittingState(false);
+        scrollChatToBottom();
+      }
+    }
+
+    // Render Full Assistant Response with Badges & Verification Layers
+    function renderAssistantResponse(msgElementId, data) {
+      const container = document.getElementById(msgElementId);
+      if (!container) return;
+
+      const decision = data.trust_decision || 'UNKNOWN';
+      const score = data.trust_score !== undefined ? data.trust_score : 0.0;
+      const percentage = data.trust_percentage !== undefined ? data.trust_percentage : Math.round(score * 100);
+      const layers = data.verification_layers || {};
+      const evidence = data.evidence_chunks || [];
+      const rejectionReason = data.rejection_reason || '';
+
+      // Determine Badge Colors & Icons
+      let badgeBg = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+      let badgeIcon = 'fa-solid fa-shield-check';
+      let badgeLabel = 'VERIFIED';
+      let badgeSubtext = 'Zero hallucinations detected. All claims grounded in AST code.';
+
+      if (decision === 'WARNING') {
+        badgeBg = 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+        badgeIcon = 'fa-solid fa-triangle-exclamation';
+        badgeLabel = 'WARNING';
+        badgeSubtext = 'Partially grounded. Contains unretrieved symbols or external dependencies.';
+      } else if (decision.startsWith('REJECTED')) {
+        badgeBg = 'bg-rose-500/10 text-rose-400 border-rose-500/30';
+        badgeIcon = 'fa-solid fa-shield-xmark';
+        badgeLabel = decision;
+        badgeSubtext = rejectionReason || 'Hallucination caught! Non-existent code symbols detected.';
+      }
+
+      // Format Markdown Explanation
+      let formattedHtml = '';
+      if (typeof marked !== 'undefined') {
+        formattedHtml = marked.parse(data.answer || 'No answer generated.');
+      } else {
+        formattedHtml = `<p>${escapeHtml(data.answer || '')}</p>`;
+      }
+
+      const cardId = `inspect-${Date.now()}`;
+
+      container.querySelector('.bg-slate-900').innerHTML = `
+        <!-- Trust Decision Banner -->
+        <div class="p-3 rounded-xl border ${badgeBg} flex items-start justify-between gap-3 shadow-sm">
+          <div class="flex items-start gap-2.5">
+            <i class="${badgeIcon} text-base mt-0.5 shrink-0"></i>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-bold font-mono tracking-wide text-xs">${badgeLabel}</span>
+                <span class="font-mono text-xs px-2 py-0.2 rounded-full bg-slate-950/60 font-semibold">${percentage}% Trust</span>
+              </div>
+              <p class="text-[11px] opacity-90 mt-0.5 leading-snug">${escapeHtml(badgeSubtext)}</p>
+            </div>
+          </div>
+          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-950/40 border border-slate-700/50 shrink-0">
+            ${data.repo_id || 'isolated'}
+          </span>
+        </div>
+
+        <!-- Markdown Technical Answer -->
+        <div class="prose prose-invert max-w-none text-slate-200 text-xs sm:text-sm leading-relaxed pt-1">
+          ${formattedHtml}
+        </div>
+
+        <!-- Interactive Verification Layers Accordion Button -->
+        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <button onclick="toggleInspection('${cardId}')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium flex items-center gap-1.5 transition text-xs">
+            <i class="fa-solid fa-microscope text-indigo-400"></i>
+            <span>Inspect 4 Verification Layers</span>
+            <i class="fa-solid fa-chevron-down text-[10px] ml-1 transition" id="icon-${cardId}"></i>
+          </button>
+          
+          <span class="text-[11px] text-slate-500 font-mono">
+            ${evidence.length} evidence chunk${evidence.length === 1 ? '' : 's'} retrieved
+          </span>
+        </div>
+
+        <!-- Collapsible Verification Inspector -->
+        <div id="${cardId}" class="hidden space-y-3 pt-2 text-xs font-mono">
+          
+          <!-- Layer 1: Lexical Grounding -->
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="font-semibold text-slate-200 font-sans flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full ${layers.layer1_existence?.passed ? 'bg-emerald-400' : 'bg-rose-400'}"></span>
+                Layer 1: Lexical Grounding (Weight: 30%)
+              </span>
+              <span class="${layers.layer1_existence?.passed ? 'text-emerald-400' : 'text-rose-400'} font-bold">
+                ${layers.layer1_existence?.score !== null && layers.layer1_existence?.score !== undefined ? (layers.layer1_existence.score * 100).toFixed(0) + '%' : 'N/A'}
+              </span>
+            </div>
+            <div class="text-[11px] text-slate-400 space-y-1">
+              <div>Grounded: <span class="text-emerald-400">${(layers.layer1_existence?.grounded_tokens || []).join(', ') || 'None'}</span></div>
+              ${layers.layer1_existence?.exists_not_retrieved?.length ? `
+                <div class="text-amber-400">Exists Not Retrieved: ${layers.layer1_existence.exists_not_retrieved.join(', ')}</div>
+              ` : ''}
+              ${layers.layer1_existence?.invented_tokens?.length ? `
+                <div class="text-rose-400 font-bold">INVENTED TOKENS: ${layers.layer1_existence.invented_tokens.join(', ')}</div>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- Layer 2: Structural AST -->
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="font-semibold text-slate-200 font-sans flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full ${layers.layer2_structural?.status === 'not_checked' ? 'bg-slate-500' : (layers.layer2_structural?.passed ? 'bg-emerald-400' : 'bg-rose-400')}"></span>
+                Layer 2: Structural AST (Weight: 25%)
+              </span>
+              <span class="${layers.layer2_structural?.passed ? 'text-emerald-400' : 'text-slate-400'}">
+                ${layers.layer2_structural?.status || 'not_checked'}
+              </span>
+            </div>
+            <div class="text-[11px] text-slate-400">
+              ${layers.layer2_structural?.violations?.length ? `
+                <div class="text-rose-400">Violations: ${layers.layer2_structural.violations.join('; ')}</div>
+              ` : 'Parameters and route request bodies matched ground-truth.'}
+            </div>
+          </div>
+
+          <!-- Layer 3: Call-Graph -->
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="font-semibold text-slate-200 font-sans flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full ${layers.layer3_callgraph?.status === 'not_checked' ? 'bg-slate-500' : (layers.layer3_callgraph?.passed ? 'bg-emerald-400' : 'bg-amber-400')}"></span>
+                Layer 3: Call-Graph Reachability (Weight: 25%)
+              </span>
+              <span class="${layers.layer3_callgraph?.passed ? 'text-emerald-400' : 'text-slate-400'}">
+                ${layers.layer3_callgraph?.status || 'not_checked'}
+              </span>
+            </div>
+            <div class="text-[11px] text-slate-400">
+              ${layers.layer3_callgraph?.unverifiable_external?.length ? `
+                <div class="text-amber-400">External dependencies: ${layers.layer3_callgraph.unverifiable_external.length} call(s) to unindexed libraries</div>
+              ` : 'Static caller-callee edges verified in NetworkX graph.'}
+            </div>
+          </div>
+
+          <!-- Layer 4: Evidence Faithfulness -->
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="font-semibold text-slate-200 font-sans flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full ${layers.layer4_evidence?.passed ? 'bg-emerald-400' : 'bg-rose-400'}"></span>
+                Layer 4: Evidence Faithfulness (Weight: 20%)
+              </span>
+              <span class="${layers.layer4_evidence?.passed ? 'text-emerald-400' : 'text-slate-400'}">
+                ${layers.layer4_evidence?.score !== null && layers.layer4_evidence?.score !== undefined ? (layers.layer4_evidence.score * 100).toFixed(0) + '%' : 'not_checked'}
+              </span>
+            </div>
+            <div class="text-[11px] text-slate-400">
+              ${layers.layer4_evidence?.unsupported?.length ? `
+                <div class="text-rose-400">Unsupported claims: ${layers.layer4_evidence.unsupported.length} statement(s) below 35% overlap threshold.</div>
+              ` : 'All factual assertions grounded in retrieved code chunks.'}
+            </div>
+          </div>
+
+          <!-- Retrieved Evidence Chunks Details -->
+          <div class="pt-2">
+            <h5 class="text-xs font-sans font-semibold text-slate-300 mb-2 flex items-center gap-1.5">
+              <i class="fa-solid fa-code text-indigo-400"></i> Retrieved Evidence Chunks (${evidence.length})
+            </h5>
+            <div class="space-y-2">
+              ${evidence.map((item, idx) => `
+                <details class="bg-slate-950 rounded-xl border border-slate-800/80 p-2 text-xs">
+                  <summary class="cursor-pointer font-mono text-indigo-300 hover:text-white flex items-center justify-between">
+                    <span>#${idx+1}: ${escapeHtml(item.fqn || item.symbol || item.file_path || 'chunk')}</span>
+                    <span class="text-[10px] text-slate-500 font-sans">${item.lines ? `Lines ${item.lines}` : ''} · Score: ${(item.rerank_score || 0).toFixed(2)}</span>
+                  </summary>
+                  <pre class="mt-2 p-2 bg-slate-900 rounded overflow-x-auto text-[11px] text-slate-300 border border-slate-800"><code>${escapeHtml(item.source_code || '')}</code></pre>
+                </details>
+              `).join('')}
+            </div>
+          </div>
+
+        </div>
+      `;
+
+      // Highlight syntax in code blocks
+      if (typeof hljs !== 'undefined') {
+        container.querySelectorAll('pre code').forEach((el) => {
+          hljs.highlightElement(el);
+        });
+      }
+    }
+
+    function toggleInspection(cardId) {
+      const panel = document.getElementById(cardId);
+      const icon = document.getElementById(`icon-${cardId}`);
+      if (panel) {
+        panel.classList.toggle('hidden');
+        if (icon) icon.classList.toggle('rotate-180');
+      }
+    }
+
+    function scrollChatToBottom() {
+      const c = document.getElementById('messages-container');
+      c.scrollTop = c.scrollHeight;
+    }
+
+    function setSubmittingState(submitting) {
+      isSubmitting = submitting;
+      const btn = document.getElementById('send-btn');
+      const icon = document.getElementById('send-btn-icon');
+      if (submitting) {
+        btn.disabled = true;
+        icon.className = 'fa-solid fa-circle-notch animate-spin text-xs';
+      } else {
+        btn.disabled = false;
+        icon.className = 'fa-solid fa-arrow-up text-xs';
+      }
+    }
+
+    function addRecentQuery(q) {
+      chatHistory.unshift(q);
+      if (chatHistory.length > 8) chatHistory.pop();
+      const list = document.getElementById('recent-queries-list');
+      list.innerHTML = chatHistory.map(item => `
+        <button onclick="submitSuggestedQuery('${escapeHtml(item).replace(/'/g, "\\'")}')" class="w-full text-left px-2 py-1.5 rounded-lg text-xs text-slate-300 hover:bg-slate-800/80 truncate block transition" title="${escapeHtml(item)}">
+          <i class="fa-regular fa-message mr-1.5 text-slate-500 text-[10px]"></i>${escapeHtml(item)}
+        </button>
+      `).join('');
+    }
+
+    // ================= TOAST NOTIFICATIONS =================
+    function showNotification(msg, type = 'info') {
+      const toast = document.createElement('div');
+      let bg = 'bg-slate-800 border-slate-700 text-white';
+      if (type === 'success') bg = 'bg-emerald-950/90 border-emerald-700/60 text-emerald-200';
+      if (type === 'error') bg = 'bg-rose-950/90 border-rose-700/60 text-rose-200';
+
+      toast.className = `fixed bottom-4 right-4 z-50 p-3.5 rounded-xl border shadow-xl text-xs flex items-center gap-2 max-w-sm transition-all duration-300 ${bg}`;
+      toast.innerHTML = `
+        <i class="fa-solid ${type === 'success' ? 'fa-circle-check text-emerald-400' : type === 'error' ? 'fa-circle-exclamation text-rose-400' : 'fa-circle-info text-indigo-400'}"></i>
+        <span class="flex-1">${escapeHtml(msg)}</span>
+      `;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // ================= USER AUTHENTICATION & LOGIN/REGISTER =================
+    function updateAuthHeaderUI() {
+      const container = document.getElementById('user-auth-header');
+      if (!container) return;
+      const user = getCurrentUser();
+
+      if (user) {
+        const isManager = user.role === 'manager';
+        container.innerHTML = `
+          <div class="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-slate-900 border border-slate-800 text-xs shadow-sm">
+            <div class="w-6 h-6 rounded-lg ${isManager ? 'bg-indigo-500/20 text-indigo-400' : 'bg-emerald-500/20 text-emerald-400'} flex items-center justify-center font-bold text-[11px]">
+              ${escapeHtml((user.username || 'U')[0].toUpperCase())}
+            </div>
+            <div class="flex flex-col text-left">
+              <span class="font-semibold text-white leading-tight text-[11px]">${escapeHtml(user.username)}</span>
+              <span class="text-[9px] uppercase tracking-wider ${isManager ? 'text-indigo-400' : 'text-emerald-400'} font-semibold leading-tight">${escapeHtml(user.role)}</span>
+            </div>
+            <button onclick="handleLogout()" title="Sign Out" class="ml-1 text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-slate-800 transition">
+              <i class="fa-solid fa-arrow-right-from-bracket text-[10px]"></i>
+            </button>
+          </div>
+        `;
+      } else {
+        container.innerHTML = `
+          <button onclick="openAuthModal()" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-sm">
+            <i class="fa-solid fa-user-lock"></i>
+            <span>Sign In / Register</span>
+          </button>
+        `;
+      }
+      applyRoleUI();
+    }
+
+    function switchAuthTab(tab) {
+      const tabLogin = document.getElementById('auth-tab-login');
+      const tabReg = document.getElementById('auth-tab-register');
+      const formLogin = document.getElementById('form-login');
+      const formReg = document.getElementById('form-register');
+
+      if (tab === 'login') {
+        tabLogin.className = "flex-1 py-1.5 text-xs font-semibold rounded-lg transition bg-indigo-600 text-white shadow";
+        tabReg.className = "flex-1 py-1.5 text-xs font-semibold rounded-lg transition text-slate-400 hover:text-white";
+        formLogin.classList.remove('hidden');
+        formReg.classList.add('hidden');
+      } else {
+        tabReg.className = "flex-1 py-1.5 text-xs font-semibold rounded-lg transition bg-emerald-600 text-white shadow";
+        tabLogin.className = "flex-1 py-1.5 text-xs font-semibold rounded-lg transition text-slate-400 hover:text-white";
+        formReg.classList.remove('hidden');
+        formLogin.classList.add('hidden');
+      }
+      document.getElementById('login-error').classList.add('hidden');
+      document.getElementById('reg-error').classList.add('hidden');
+    }
+
+    function fillDemoCredentials(role) {
+      switchAuthTab('login');
+      if (role === 'manager') {
+        document.getElementById('login-username').value = 'manager';
+        document.getElementById('login-password').value = 'admin123';
+      } else {
+        document.getElementById('login-username').value = 'dev';
+        document.getElementById('login-password').value = 'dev123';
+      }
+    }
+
+    async function handleLoginSubmit(event) {
+      event.preventDefault();
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      const errBox = document.getElementById('login-error');
+      const btn = document.getElementById('btn-login-submit');
+
+      errBox.classList.add('hidden');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin mr-1.5"></i> Authenticating...';
+
+      try {
+        const res = await fetch('/api/v1/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || 'Invalid username or password.');
+        }
+
+        setAuthToken(data.token);
+        setCurrentUser(data.user);
+        closeAuthModal();
+        showNotification(`Welcome back, ${data.user.username}! Signed in as ${data.user.role}.`, 'success');
+        if (data.user.role === 'developer') {
+          switchTab('chat');
+        } else {
+          switchTab('manager');
+        }
+        refreshProjects();
+      } catch (err) {
+        errBox.textContent = err.message;
+        errBox.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Sign In</span><i class="fa-solid fa-arrow-right text-xs ml-1.5"></i>';
+      }
+    }
+
+    async function handleRegisterSubmit(event) {
+      event.preventDefault();
+      const username = document.getElementById('reg-username').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const roleElem = document.querySelector('input[name="reg-role"]:checked');
+      const role = roleElem ? roleElem.value : 'developer';
+      const errBox = document.getElementById('reg-error');
+      const btn = document.getElementById('btn-reg-submit');
+
+      errBox.classList.add('hidden');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin mr-1.5"></i> Creating account...';
+
+      try {
+        const res = await fetch('/api/v1/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email, password, role })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || 'Registration failed.');
+        }
+
+        setAuthToken(data.token);
+        setCurrentUser(data.user);
+        closeAuthModal();
+        showNotification(`Account created! Welcome, ${data.user.username} (${data.user.role}).`, 'success');
+        if (data.user.role === 'developer') {
+          switchTab('chat');
+        } else {
+          switchTab('manager');
+        }
+        refreshProjects();
+      } catch (err) {
+        errBox.textContent = err.message;
+        errBox.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Create Account & Sign In</span><i class="fa-solid fa-check text-xs ml-1.5"></i>';
+      }
+    }
+
+    function handleLogout() {
+      setAuthToken(DEFAULT_AUTH_TOKEN);
+      setCurrentUser(null);
+      showNotification('Signed out. Switched to guest mode.', 'info');
+      refreshProjects();
+    }
+
+    function openAuthModal() {
+      const modal = document.getElementById('auth-modal');
+      const tokenInput = document.getElementById('auth-token-input');
+      if (tokenInput) tokenInput.value = getAuthToken();
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeAuthModal() {
+      const modal = document.getElementById('auth-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function saveDirectAuthToken() {
+      const t = document.getElementById('auth-token-input').value.trim();
+      setAuthToken(t || DEFAULT_AUTH_TOKEN);
+      setCurrentUser({
+        username: 'admin',
+        role: 'manager',
+        email: 'admin@system.internal'
+      });
+      closeAuthModal();
+      showNotification('Custom bearer token activated.', 'success');
+      refreshProjects();
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Initialize on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      updateAuthHeaderUI();
+      applyRoleUI();
+      refreshProjects();
+    });
+  </script>
+</body>
+</html>

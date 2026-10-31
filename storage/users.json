@@ -1,0 +1,79 @@
+{
+  "manager": {
+    "id": "usr_manager_001",
+    "username": "manager",
+    "email": "manager@company.internal",
+    "role": "manager",
+    "password_hash": "b5318aa567a32176c243ebf6ec365dc215879510d5ddbbbca22cbc39e812d877",
+    "salt": "3b03442987ec705989fcae5744004b9c",
+    "token": "rag_token_manager_ebd43138177ee760f94385702114f273",
+    "created_at": "2026-10-31T21:57:16.870172",
+    "last_login": "2026-10-31T23:33:01.439816"
+  },
+  "dev": {
+    "id": "usr_dev_002",
+    "username": "dev",
+    "email": "developer@company.internal",
+    "role": "developer",
+    "password_hash": "c233a7662d6311dca3dfc3ddb345ad64c3033a2825ad0bbc932e0e40e21a197e",
+    "salt": "00fd47501cad0d7a4fa04adc751efea8",
+    "token": "rag_token_dev_14ad85dae212a4e6e90a9abfcf1a0933",
+    "created_at": "2026-10-31T21:57:16.946269",
+    "last_login": "2026-10-31T23:31:26.837780"
+  },
+  "sarah": {
+    "id": "usr_d912289d3237",
+    "username": "sarah",
+    "email": "sarah@test.com",
+    "role": "developer",
+    "password_hash": "92a70f8be9bcda87a55ddc2302fb8dc7573939a9af0efeb7c3f2229ea9eacf89",
+    "salt": "b7d1db61357db328ebf063101392e7c5",
+    "token": "rag_token_sarah_97e30e78e835efad544afafeafdb2a45",
+    "created_at": "2026-10-31T21:57:17.162836",
+    "last_login": "2026-10-31T21:57:17.291289"
+  },
+  "john_doe": {
+    "id": "usr_fadeacbb8615",
+    "username": "john_doe",
+    "email": "john@example.com",
+    "role": "developer",
+    "password_hash": "8567046cff723656e7b5b774477cfb81798eaa46e859b25d9ac103f7c3321ae3",
+    "salt": "9e2059c0e0b127308f7809b360fa073d",
+    "token": "rag_token_john_doe_9e30005692dd7f57c6d078281d0c61f3",
+    "created_at": "2026-10-31T22:00:22.240085",
+    "last_login": "2026-10-31T22:00:22.240085"
+  },
+  "tester_6ed191": {
+    "id": "usr_449856421790",
+    "username": "tester_6ed191",
+    "email": "tester_6ed191@example.com",
+    "role": "developer",
+    "password_hash": "750bf6063cecb4cf4a14bb9e21e009c69b0b4f6f165ee19f010f7ae3a8d5da36",
+    "salt": "ab4f68cd7654f74c5d3785f596688749",
+    "token": "rag_token_tester_6ed191_f0176afed82c3300dde0b482d49f6a1e",
+    "created_at": "2026-10-31T22:05:49.219051",
+    "last_login": "2026-10-31T22:05:49.267855"
+  },
+  "rechi": {
+    "id": "usr_e90d49f2c044",
+    "username": "rechi",
+    "email": "rechi@gmail.com",
+    "role": "manager",
+    "password_hash": "cebc9b6ca9948efcf34fab5a62988a5cd1f6fb01eb9a9006c69d2d674f71ed26",
+    "salt": "533839b52ed69e50e244aaa223b90e0b",
+    "token": "rag_token_rechi_a94b9d3be88ae712b3492b4bebff7268",
+    "created_at": "2026-10-31T22:27:25.770654",
+    "last_login": "2026-10-31T22:27:25.771513"
+  },
+  "rechi_developer": {
+    "id": "usr_94c171bdaa3e",
+    "username": "rechi_developer",
+    "email": "rechidev@gmail.com",
+    "role": "developer",
+    "password_hash": "95c2114e7de0d38dc64923de6b53cc02909d1ab2fc92e6e91949d949562df134",
+    "salt": "acb87b5912f419f54e20f25572d5c764",
+    "token": "rag_token_rechi_developer_60fee3197210ef7987eb46967672bc9b",
+    "created_at": "2026-10-31T22:29:28.873593",
+    "last_login": "2026-10-31T22:29:28.873593"
+  }
+}

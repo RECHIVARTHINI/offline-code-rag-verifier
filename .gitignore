@@ -23,6 +23,7 @@ env/
 
 # Local runtime data
 storage/qdrant/
+storage/repos/
 *.log
 company_codebase/
 

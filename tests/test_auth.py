@@ -1,9 +1,11 @@
 """
 Test Suite: Bearer Token Authentication (HTTPBearer)
-Validates HTTP 401 on missing, invalid, or unconfigured tokens on protected endpoints.
+Validates HTTP 401 on missing, invalid, or unconfigured tokens,
+and verifies user registration, login, and session tokens.
 """
 import os
 import sys
+import uuid
 from fastapi.testclient import TestClient
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -55,6 +57,38 @@ def test_valid_auth_token_passes():
     res_query = client.post("/api/v1/userquery", json={"query": "test", "repo_id": "nonexistent_repo"}, headers=headers)
     assert res_query.status_code in [400, 404] # Passed auth!
 
+def test_user_registration_and_login_flow():
+    unique_user = f"user_{uuid.uuid4().hex[:6]}"
+    
+    # 1. Register new user
+    res_reg = client.post("/api/v1/auth/register", json={
+        "username": unique_user,
+        "password": "mypassword123",
+        "email": f"{unique_user}@example.com",
+        "role": "developer"
+    })
+    assert res_reg.status_code == 201, f"Register failed: {res_reg.text}"
+    data_reg = res_reg.json()
+    assert data_reg["status"] == "SUCCESS"
+    token = data_reg["token"]
+    assert token.startswith(f"rag_token_{unique_user}_")
+
+    # 2. Login with registered user
+    res_login = client.post("/api/v1/auth/login", json={
+        "username": unique_user,
+        "password": "mypassword123"
+    })
+    assert res_login.status_code == 200, f"Login failed: {res_login.text}"
+    login_token = res_login.json()["token"]
+
+    # 3. Access /api/v1/auth/me with user Bearer token
+    headers = {"Authorization": f"Bearer {login_token}"}
+    res_me = client.get("/api/v1/auth/me", headers=headers)
+    assert res_me.status_code == 200
+    user_info = res_me.json()["user"]
+    assert user_info["username"] == unique_user
+    assert user_info["role"] == "developer"
+
 if __name__ == "__main__":
     test_missing_auth_token_returns_401()
     print("PASS: test_missing_auth_token_returns_401")
@@ -64,4 +98,6 @@ if __name__ == "__main__":
     print("PASS: test_unconfigured_auth_token_env_returns_401")
     test_valid_auth_token_passes()
     print("PASS: test_valid_auth_token_passes")
+    test_user_registration_and_login_flow()
+    print("PASS: test_user_registration_and_login_flow")
     print("\nALL AUTHENTICATION TESTS PASSED!")
